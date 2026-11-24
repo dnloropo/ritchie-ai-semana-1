@@ -130,6 +130,11 @@ a { color: inherit; }
 .badge-success i { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
 .badge-neutral { background: var(--surface-variant); color: var(--on-surface-variant); }
 .badge-demo { background: var(--tertiary-container); color: var(--on-tertiary-container); }
+.badge-ia { background: #E3F2FD; color: #1565C0; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+.autonomy-note { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding: 8px 12px; border-radius: 8px; background: #FFF3E0; color: #E65100; font-size: .82rem; }
+.pii-warning { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: 10px; background: #FCE4EC; color: #C62828; }
+.pii-warning b { display: block; margin-bottom: 2px; }
+.pii-warning p { margin: 0; font-size: .85rem; }
 
 /* ===== Barra lateral ===== */
 .sidebar {

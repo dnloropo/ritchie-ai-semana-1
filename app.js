@@ -21,6 +21,21 @@ const facts = (rows) =>
   `<ul class="facts">${rows.map(([ic, label, value]) =>
     `<li><span class="fi">${icon(ic)}</span><span class="ft"><b>${label}</b><span>${value}</span></span></li>`).join("")}</ul>`;
 
+/* ---------- PII: detección y redacción de datos personales ---------- */
+const PII_PATTERNS = [
+  { regex: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, label: "[correo oculto]" },
+  { regex: /\b(\+?\d{1,3}[-.\s]?)?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}\b/g, label: "[teléfono oculto]" },
+  { regex: /\b\d{6,10}\b/g, label: "[documento oculto]" },
+];
+function redactPII(text) {
+  let cleaned = text;
+  PII_PATTERNS.forEach(({ regex, label }) => { cleaned = cleaned.replace(new RegExp(regex.source, regex.flags), label); });
+  return cleaned;
+}
+function containsPII(text) {
+  return PII_PATTERNS.some(({ regex }) => new RegExp(regex.source, regex.flags).test(text));
+}
+
 /* ---------- Base de conocimiento DEMO (datos ficticios) ---------- */
 const KNOWLEDGE = [
   {
@@ -117,6 +132,8 @@ function resolveAnswer(question) {
 function cardHTML(msg) {
   if (msg.type === "answer") {
     const badge = msg.noSource ? "" : `<span class="badge badge-demo">Datos ficticios de ejemplo · no es información oficial</span>`;
+    const aiBadge = `<span class="badge badge-ia">${icon("smart_toy", "sm")} Esta información fue generada por IA — puede contener errores. Verifica siempre con fuentes oficiales.</span>`;
+    const autonomyNote = `<div class="autonomy-note">${icon("info", "sm")} <span>La IA informa, tú decides. La decisión final siempre es tuya.</span></div>`;
     const source = msg.noSource || !msg.source ? "" : `
       <div class="source">
         <span class="src-ico">${icon("description")}</span>
@@ -126,7 +143,7 @@ function cardHTML(msg) {
         </span>
         <a href="#" class="btn btn-outlined" data-doc="${msg.source.file}">Consultar documento</a>
       </div>`;
-    return `<div class="card"><div class="card-head"><span class="who">Ritchie AI</span>${badge}</div>${msg.short ? `<p class="short">${msg.short}</p>` : ""}${msg.html}${source}</div>`;
+    return `<div class="card"><div class="card-head"><span class="who">Ritchie AI</span>${badge}${aiBadge}</div>${msg.short ? `<p class="short">${msg.short}</p>` : ""}${msg.html}${source}${autonomyNote}</div>`;
   }
   if (msg.type === "safety") {
     return `<div class="card is-safety">
@@ -223,11 +240,20 @@ function ask(question) {
   }
   const conv = current();
   welcome.hidden = true;
-  const userMsg = { role: "user", text: question };
+  // Redactar datos personales del input del usuario antes de mostrar
+  const safeQuestion = redactPII(question);
+  const userMsg = { role: "user", text: safeQuestion };
   conv.messages.push(userMsg);
   appendMessage(userMsg);
   renderHistory();
-  respond(question);
+  // Avisar si se detectaron datos personales
+  if (containsPII(question)) {
+    const piiWarn = { role: "bot", type: "answer", noSource: true,
+      html: `<div class="pii-warning">${icon("security", "lg")} <div><b>Protección de datos personales</b><p>Hemos detectado datos personales en tu mensaje. Por tu seguridad, fueron ocultados automáticamente. Ritchie AI nunca solicita ni almacena datos personales.</p></div></div>` };
+    conv.messages.push(piiWarn);
+    appendMessage(piiWarn);
+  }
+  respond(safeQuestion);
 }
 
 async function respond(question) {
@@ -247,14 +273,19 @@ async function respond(question) {
     } else {
       result = { type: "error" };
     }
+    // Si la API no está configurada aún, caemos al motor local
     if (result.fallback) {
       result = resolveAnswer(question);
     }
+    // Redactar PII de la respuesta
+    if (result.short) result.short = redactPII(result.short);
+    if (result.html) result.html = redactPII(result.html);
     const botMsg = { role: "bot", ...result, question };
     current().messages.push(botMsg);
     appendMessage(botMsg);
   } catch (err) {
     hideThinking();
+    // Sin conexión o función no disponible → motor local de respaldo
     const result = resolveAnswer(question);
     const botMsg = { role: "bot", ...result, question };
     current().messages.push(botMsg);
