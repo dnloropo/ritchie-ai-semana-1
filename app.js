@@ -114,8 +114,8 @@ function cardHTML(msg) {
       <div class="source">
         <span class="src-ico">${icon("description")}</span>
         <span class="src-meta">
-          <span class="src-label">Fuente: Calendario de la cohorte</span>
-          <span class="src-file">${SOURCE_FILE}</span>
+          <span class="src-label">Fuente: ${msg.source.label}</span>
+          <span class="src-file">${msg.source.file}</span>
         </span>
         <a href="#" class="btn btn-outlined" data-doc="${msg.source.file}">Consultar documento</a>
       </div>`;
