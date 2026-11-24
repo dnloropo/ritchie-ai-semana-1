@@ -1,5 +1,5 @@
 /* =========================================================
-   Ritchie AI · Clan IA — Lógica (demostración)
+   Ritchie AI — Lógica (demostración)
    Todas las respuestas son simuladas con datos FICTICIOS.
    ========================================================= */
 const $ = (sel) => document.querySelector(sel);

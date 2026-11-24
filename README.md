@@ -1,4 +1,4 @@
-# Ritchie AI · Clan IA (maqueta)
+# Ritchie AI (maqueta)
 
 Maqueta de un asistente educativo para una cohorte. Es una demostración: **todas las respuestas son simuladas y los datos (fechas, contactos, documentos) son ficticios**, no información oficial.
 
