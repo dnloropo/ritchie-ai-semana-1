@@ -37,7 +37,7 @@ keywords: ["sesion", "clase de ia", "proxima clase", "proxima sesion", "horario"
   {
     short: "Hasta el viernes 4 de diciembre, 11:59 p. m.",
 source: { label: "Guía del proyecto", file: "guia-proyecto-demo.pdf" },
-keywords: ["proyecto", "entrega", "fecha de entrega", "entregar", "deadline"],
+keywords: ["proyecto", "entrega", "fecha de entrega", "fecha limite", "entregar", "deadline"],
     html: `<h3>Entrega del proyecto</h3>` + facts([
       ["flag", "Fecha límite", "Viernes 4 de diciembre de 2026"],
       ["schedule", "Hora", "Hasta las 11:59 p. m."],
@@ -65,6 +65,11 @@ keywords: ["material", "recurso", "estudio", "documento", "apuntes", "diapositiv
     ]),
   },
   {
+    keywords: ["coach", "contacto", "hablar con una persona"],
+    html: `<h3>Hablar con una persona</h3><p>Un coach puede ayudarte con lo que Ritchie AI no puede resolver. Usa el botón <b>Hablar con un coach</b> de la barra lateral.</p>`,
+    noSource: true,
+  },
+  {
     keywords: ["hola", "buenas", "buenos dias", "buenas tardes", "gracias"],
     html: `<h3>¡Hola!</h3><p>Con gusto te ayudo. Puedes preguntarme por sesiones, actividades, fechas de entrega, proyectos o materiales de estudio.</p>`,
     noSource: true,
@@ -74,8 +79,8 @@ keywords: ["material", "recurso", "estudio", "documento", "apuntes", "diapositiv
 /* Temas sensibles: se derivan a una persona */
 const SENSITIVE = [
   "salud", "enfermo", "enferma", "enfermedad", "medic", "depres", "ansiedad", "estres", "triste", "suicid",
-  "calificacion", "nota ", "notas", "promedio", "aprobar", "reprob", "perder el curso",
-  "personal", "familia", "problema con", "acoso", "maltrato", "abuso", "violencia",
+  "calificacion", "mis notas", "mi nota", "promedio", "aprobar", "reprob", "perder el curso",
+  "situacion personal", "problema personal", "asunto personal", "familia", "problema con mi", "acoso", "maltrato", "abuso", "violencia",
   "expulsar", "sancionar", "despedir", "castigar", "mi compañero", "mi companero", "decidir sobre",
 ];
 
@@ -101,7 +106,9 @@ function load() {
 function resolveAnswer(question) {
   const q = normalize(question);
   if (SENSITIVE.some((k) => q.includes(k))) return { type: "safety" };
-  const hit = KNOWLEDGE.find((k) => k.keywords.some((kw) => q.includes(kw)));
+  // Gana el tema con la palabra clave más específica (más larga), no el primero de la lista.
+  let hit = null, best = 0;
+  KNOWLEDGE.forEach((k) => k.keywords.forEach((kw) => { if (q.includes(kw) && kw.length > best) { best = kw.length; hit = k; } }));
   if (hit) return { type: "answer", html: hit.html, short: hit.short, source: hit.source, noSource: hit.noSource };
   return { type: "error" };
 }
