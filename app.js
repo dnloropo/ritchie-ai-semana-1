@@ -230,22 +230,40 @@ function ask(question) {
   respond(question);
 }
 
-function respond(question) {
+async function respond(question) {
   busy = true;
   updateSend();
   showThinking();
-  const delay = 1100 + Math.random() * 900;
-  setTimeout(() => {
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ question }),
+    });
+    hideThinking();
+    let result;
+    if (res.ok) {
+      result = await res.json();
+    } else {
+      result = { type: "error" };
+    }
+    if (result.fallback) {
+      result = resolveAnswer(question);
+    }
+    const botMsg = { role: "bot", ...result, question };
+    current().messages.push(botMsg);
+    appendMessage(botMsg);
+  } catch (err) {
     hideThinking();
     const result = resolveAnswer(question);
     const botMsg = { role: "bot", ...result, question };
     current().messages.push(botMsg);
     appendMessage(botMsg);
-    save();
-    busy = false;
-    updateSend();
-    input.focus();
-  }, delay);
+  }
+  save();
+  busy = false;
+  updateSend();
+  input.focus();
 }
 
 function updateSend() { sendBtn.disabled = busy || !input.value.trim(); }
